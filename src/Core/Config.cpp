@@ -158,12 +158,17 @@ Config::Config(common::CommandLine &cmd)
 		exclusive_nodes = true;
 		priority_nodes  = exclusive_nodes_list;
 	}
-	if (seed_nodes.empty() && net != "test")
-		for (auto &&sn : net == "stage" ? SEED_NODES_STAGENET : SEED_NODES) {
+	if (seed_nodes.empty() && net != "test") {
+		// The two seed lists may differ in length, so they cannot share one ?: expression
+		const std::vector<const char *> default_seeds = net == "stage"
+		    ? std::vector<const char *>(std::begin(SEED_NODES_STAGENET), std::end(SEED_NODES_STAGENET))
+		    : std::vector<const char *>(std::begin(SEED_NODES), std::end(SEED_NODES));
+		for (auto &&sn : default_seeds) {
 			NetworkAddress addr;
 			common::parse_ip_address_and_port(sn, &addr.ip, &addr.port);
 			seed_nodes.push_back(addr);
 		}
+	}
 	std::sort(seed_nodes.begin(), seed_nodes.end());
 	std::sort(priority_nodes.begin(), priority_nodes.end());
 

@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <memory>
 #include "benchmarks.hpp"
 #include <chrono>
 #include <cmath>

@@ -146,8 +146,9 @@ constexpr PublicKey CHECKPOINT_PUBLIC_KEYS_STAGENET[] = {
     common::pfh<PublicKey>("c9b8aa2f09fb81f77c135d1eb23cd7eac5b66c409058d5b53f724a1b887fe70f"),
     common::pfh<PublicKey>("62020c71bbf2447ee588b28c15430434f2ceac8443c40b6e48b627e437110981")};
 
-const char *const SEED_NODES[] = {
-    "207.246.127.160:8080", "108.61.174.232:8080", "45.32.156.183:8080", "45.76.29.96:8080"};
+// Nodes alive in 2026 first; the original bcndev seeds are kept in case they come back
+const char *const SEED_NODES[] = {"195.154.106.27:8080", "31.220.87.232:8080", "207.246.127.160:8080",
+    "108.61.174.232:8080", "45.32.156.183:8080", "45.76.29.96:8080"};
 const char *const SEED_NODES_STAGENET[] = {
     "207.246.127.160:10080", "108.61.174.232:10080", "45.32.156.183:10080", "45.76.29.96:10080"};
 // testnet will have no seed nodes

@@ -30,6 +30,8 @@ else()
     # We can build on old Ubuntu 14 with clang by adding next line (does not work with add_compile_options)
     # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
     # Binaries will need sudo apt-get install libc++-dev to run on machines without clang
+    # Consensus code type-puns byte buffers (hash state, CryptoNight scratchpad); never let the optimizer assume otherwise
+    add_compile_options(-fno-strict-aliasing)
     add_compile_options(-maes -g -Wall -Wextra -Wformat -Wformat-security -Werror=return-type -Wno-unused-parameter)
     # Security options below, on old Linux replace -fstack-protector-strong with -fstack-protector
     add_compile_options(-fPIE -fPIC -fstack-protector-strong)

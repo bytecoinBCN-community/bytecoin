@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <limits>
 #include <ctype.h>
 #include <algorithm>
 #include <string>

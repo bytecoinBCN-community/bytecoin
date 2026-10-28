@@ -99,6 +99,15 @@ static HashReturn Update(hashState *state, const BitSequence *data, DataLength d
 static HashReturn Final(hashState *state, BitSequence *hashval);
 HashReturn jh_hash(int hashbitlen, const BitSequence *data,DataLength databitlen, BitSequence *hashval);
 
+/*Reads 8 bytes as uint64 without breaking strict aliasing: casting the byte buffer to uint64* is UB,
+  and GCC 13 at -O3 then drops the padding stores made in Final(), producing wrong hashes*/
+static inline uint64 load64(const unsigned char *p)
+{
+      uint64 v;
+      memcpy(&v, p, sizeof(v));
+      return v;
+}
+
 /*swapping bit 2i with bit 2i+1 of 64-bit x*/
 #define SWAP1(x)   (x) = ((((x) & 0x5555555555555555ULL) << 1) | (((x) & 0xaaaaaaaaaaaaaaaaULL) >> 1));
 /*swapping bits 4i||4i+1 with bits 4i+2||4i+3 of 64-bit x*/
@@ -157,49 +166,49 @@ static void E8(hashState *state)
       for (roundnumber = 0; roundnumber < 42; roundnumber = roundnumber+7) {
             /*round 7*roundnumber+0: Sbox, MDS and Swapping layers*/
             for (i = 0; i < 2; i++) {
-                  SS(state->x[0][i],state->x[2][i],state->x[4][i],state->x[6][i],state->x[1][i],state->x[3][i],state->x[5][i],state->x[7][i],((uint64*)E8_bitslice_roundconstant[roundnumber+0])[i],((uint64*)E8_bitslice_roundconstant[roundnumber+0])[i+2] );
+                  SS(state->x[0][i],state->x[2][i],state->x[4][i],state->x[6][i],state->x[1][i],state->x[3][i],state->x[5][i],state->x[7][i],load64(E8_bitslice_roundconstant[roundnumber+0] + 8*i),load64(E8_bitslice_roundconstant[roundnumber+0] + 8*(i+2)) );
                   L(state->x[0][i],state->x[2][i],state->x[4][i],state->x[6][i],state->x[1][i],state->x[3][i],state->x[5][i],state->x[7][i]);
                   SWAP1(state->x[1][i]); SWAP1(state->x[3][i]); SWAP1(state->x[5][i]); SWAP1(state->x[7][i]);
             }
 
             /*round 7*roundnumber+1: Sbox, MDS and Swapping layers*/
             for (i = 0; i < 2; i++) {
-                  SS(state->x[0][i],state->x[2][i],state->x[4][i],state->x[6][i],state->x[1][i],state->x[3][i],state->x[5][i],state->x[7][i],((uint64*)E8_bitslice_roundconstant[roundnumber+1])[i],((uint64*)E8_bitslice_roundconstant[roundnumber+1])[i+2] );
+                  SS(state->x[0][i],state->x[2][i],state->x[4][i],state->x[6][i],state->x[1][i],state->x[3][i],state->x[5][i],state->x[7][i],load64(E8_bitslice_roundconstant[roundnumber+1] + 8*i),load64(E8_bitslice_roundconstant[roundnumber+1] + 8*(i+2)) );
                   L(state->x[0][i],state->x[2][i],state->x[4][i],state->x[6][i],state->x[1][i],state->x[3][i],state->x[5][i],state->x[7][i]);
                   SWAP2(state->x[1][i]); SWAP2(state->x[3][i]); SWAP2(state->x[5][i]); SWAP2(state->x[7][i]);
             }
 
             /*round 7*roundnumber+2: Sbox, MDS and Swapping layers*/
             for (i = 0; i < 2; i++) {
-                  SS(state->x[0][i],state->x[2][i],state->x[4][i],state->x[6][i],state->x[1][i],state->x[3][i],state->x[5][i],state->x[7][i],((uint64*)E8_bitslice_roundconstant[roundnumber+2])[i],((uint64*)E8_bitslice_roundconstant[roundnumber+2])[i+2] );
+                  SS(state->x[0][i],state->x[2][i],state->x[4][i],state->x[6][i],state->x[1][i],state->x[3][i],state->x[5][i],state->x[7][i],load64(E8_bitslice_roundconstant[roundnumber+2] + 8*i),load64(E8_bitslice_roundconstant[roundnumber+2] + 8*(i+2)) );
                   L(state->x[0][i],state->x[2][i],state->x[4][i],state->x[6][i],state->x[1][i],state->x[3][i],state->x[5][i],state->x[7][i]);
                   SWAP4(state->x[1][i]); SWAP4(state->x[3][i]); SWAP4(state->x[5][i]); SWAP4(state->x[7][i]);
             }
 
             /*round 7*roundnumber+3: Sbox, MDS and Swapping layers*/
             for (i = 0; i < 2; i++) {
-                  SS(state->x[0][i],state->x[2][i],state->x[4][i],state->x[6][i],state->x[1][i],state->x[3][i],state->x[5][i],state->x[7][i],((uint64*)E8_bitslice_roundconstant[roundnumber+3])[i],((uint64*)E8_bitslice_roundconstant[roundnumber+3])[i+2] );
+                  SS(state->x[0][i],state->x[2][i],state->x[4][i],state->x[6][i],state->x[1][i],state->x[3][i],state->x[5][i],state->x[7][i],load64(E8_bitslice_roundconstant[roundnumber+3] + 8*i),load64(E8_bitslice_roundconstant[roundnumber+3] + 8*(i+2)) );
                   L(state->x[0][i],state->x[2][i],state->x[4][i],state->x[6][i],state->x[1][i],state->x[3][i],state->x[5][i],state->x[7][i]);
                   SWAP8(state->x[1][i]); SWAP8(state->x[3][i]); SWAP8(state->x[5][i]); SWAP8(state->x[7][i]);
             }
 
             /*round 7*roundnumber+4: Sbox, MDS and Swapping layers*/
             for (i = 0; i < 2; i++) {
-                  SS(state->x[0][i],state->x[2][i],state->x[4][i],state->x[6][i],state->x[1][i],state->x[3][i],state->x[5][i],state->x[7][i],((uint64*)E8_bitslice_roundconstant[roundnumber+4])[i],((uint64*)E8_bitslice_roundconstant[roundnumber+4])[i+2] );
+                  SS(state->x[0][i],state->x[2][i],state->x[4][i],state->x[6][i],state->x[1][i],state->x[3][i],state->x[5][i],state->x[7][i],load64(E8_bitslice_roundconstant[roundnumber+4] + 8*i),load64(E8_bitslice_roundconstant[roundnumber+4] + 8*(i+2)) );
                   L(state->x[0][i],state->x[2][i],state->x[4][i],state->x[6][i],state->x[1][i],state->x[3][i],state->x[5][i],state->x[7][i]);
                   SWAP16(state->x[1][i]); SWAP16(state->x[3][i]); SWAP16(state->x[5][i]); SWAP16(state->x[7][i]);
             }
 
             /*round 7*roundnumber+5: Sbox, MDS and Swapping layers*/
             for (i = 0; i < 2; i++) {
-                  SS(state->x[0][i],state->x[2][i],state->x[4][i],state->x[6][i],state->x[1][i],state->x[3][i],state->x[5][i],state->x[7][i],((uint64*)E8_bitslice_roundconstant[roundnumber+5])[i],((uint64*)E8_bitslice_roundconstant[roundnumber+5])[i+2] );
+                  SS(state->x[0][i],state->x[2][i],state->x[4][i],state->x[6][i],state->x[1][i],state->x[3][i],state->x[5][i],state->x[7][i],load64(E8_bitslice_roundconstant[roundnumber+5] + 8*i),load64(E8_bitslice_roundconstant[roundnumber+5] + 8*(i+2)) );
                   L(state->x[0][i],state->x[2][i],state->x[4][i],state->x[6][i],state->x[1][i],state->x[3][i],state->x[5][i],state->x[7][i]);
                   SWAP32(state->x[1][i]); SWAP32(state->x[3][i]); SWAP32(state->x[5][i]); SWAP32(state->x[7][i]);
             }
 
             /*round 7*roundnumber+6: Sbox and MDS layers*/
             for (i = 0; i < 2; i++) {
-                  SS(state->x[0][i],state->x[2][i],state->x[4][i],state->x[6][i],state->x[1][i],state->x[3][i],state->x[5][i],state->x[7][i],((uint64*)E8_bitslice_roundconstant[roundnumber+6])[i],((uint64*)E8_bitslice_roundconstant[roundnumber+6])[i+2] );
+                  SS(state->x[0][i],state->x[2][i],state->x[4][i],state->x[6][i],state->x[1][i],state->x[3][i],state->x[5][i],state->x[7][i],load64(E8_bitslice_roundconstant[roundnumber+6] + 8*i),load64(E8_bitslice_roundconstant[roundnumber+6] + 8*(i+2)) );
                   L(state->x[0][i],state->x[2][i],state->x[4][i],state->x[6][i],state->x[1][i],state->x[3][i],state->x[5][i],state->x[7][i]);
             }
             /*round 7*roundnumber+6: swapping layer*/
@@ -216,13 +225,13 @@ static void F8(hashState *state)
       uint64  i;
 
       /*xor the 512-bit message with the fist half of the 1024-bit hash state*/
-      for (i = 0; i < 8; i++)  state->x[i >> 1][i & 1] ^= ((uint64*)state->buffer)[i];
+      for (i = 0; i < 8; i++)  state->x[i >> 1][i & 1] ^= load64(state->buffer + 8*i);
 
       /*the bijective function E8 */
       E8(state);
 
       /*xor the 512-bit message with the second half of the 1024-bit hash state*/
-      for (i = 0; i < 8; i++)  state->x[(8+i) >> 1][(8+i) & 1] ^= ((uint64*)state->buffer)[i];
+      for (i = 0; i < 8; i++)  state->x[(8+i) >> 1][(8+i) & 1] ^= load64(state->buffer + 8*i);
 }
 
 /*before hashing a message, initialize the hash state as H0 */
