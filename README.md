@@ -1,3 +1,57 @@
+# Bytecoin v3.5.1 for Ubuntu 24.04 (community maintenance)
+
+**This is an independent community fork. It is not affiliated with the Bytecoin founders or bcndev and does not speak for them.** All code stays under LGPLv3, and the upstream history and authorship are kept. The upstream README follows below.
+
+Upstream `bcndev/bytecoin` last changed on 18 July 2019 (v3.5.1). This branch makes that release build and run correctly on a current system. **Consensus is unchanged**, so it runs on the existing network alongside other nodes.
+
+## What changed
+
+| File | Change |
+| --- | --- |
+| `src/crypto/jh/jh.c` | **Fixes the JH hash.** The code read byte buffers through `uint64*` (undefined behaviour under strict aliasing). GCC 13 at `-O3` dropped padding writes in `Final()`, so JH was wrong for short inputs. JH is part of CryptoNight finalization, so this breaks consensus when built with a modern compiler. |
+| `CMakeLists.txt` | Adds `-fno-strict-aliasing` as a safeguard for the rest of the type-punning crypto code. |
+| `src/CryptoNoteConfig.hpp` | Adds live seed nodes in front of the old ones. |
+| `src/Core/Config.cpp` | Makes the seed node loop work with lists of different lengths. |
+| `crypto.hpp`, `Math.hpp`, `WalletLegacy.hpp`, `DBsqlite3.cpp`, `benchmarks.cpp` | Adds includes that GCC 13 no longer pulls in transitively. |
+
+GCC 13, Boost 1.83 and OpenSSL 3 come from the distribution instead of vendored copies.
+
+## Build and run with Docker
+
+The build expects `bytecoin` and `lmdb` side by side:
+
+```bash
+git clone -b ubuntu-24.04 https://github.com/bytecoinBCN-community/bytecoin.git
+git clone https://github.com/bcndev/lmdb.git
+DOCKER_BUILDKIT=1 docker build --build-arg JOBS=2 -f bytecoin/docker/Dockerfile -t bytecoin:3.5.1-noble .
+docker run -d --name bytecoind --restart unless-stopped \
+  -p 8080:8080 -p 127.0.0.1:8081:8081 \
+  -v bytecoin-data:/var/lib/bytecoin bytecoin:3.5.1-noble
+```
+
+- `8080` is P2P. Open it to help the network.
+- `8081` is RPC. Keep it on localhost.
+- The image also contains `walletd`, `minerd` and `tests`.
+
+## What has been tested
+
+- `tests --crypto --bip32 --hash --json --wallet --db` passes (22 crypto suites, 0 failures).
+- `cn_fast_hash` and `cn_slow_hash` reference values match an Ubuntu 18.04 build bit for bit.
+- PoW of real mainnet v4 blocks validates.
+- A node built from this code has synced the full chain to the tip and has produced blocks accepted by the network.
+
+## What has not been done
+
+- **No security audit yet.** Do not treat this branch as audited.
+- `--blockchain` and `--wallet-state` test suites have not been run.
+- Only Linux x86-64 has been tested.
+
+## Security
+
+Please do not open public issues for vulnerabilities. Report them privately through GitHub's private vulnerability reporting on this repository.
+
+---
+
 # Bytecoin
 
 [![Build Status](https://dev.azure.com/bcndev/bytecoin/_apis/build/status/bytecoin-daemons?branchName=releases/3.5.1)](https://dev.azure.com/bcndev/bytecoin/_build/latest?definitionId=1&branchName=releases/3.5.1)
