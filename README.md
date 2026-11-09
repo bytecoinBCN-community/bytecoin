@@ -16,7 +16,25 @@ Upstream `bcndev/bytecoin` last changed on 18 July 2019 (v3.5.1). This branch ma
 
 GCC 13, Boost 1.83 and OpenSSL 3 come from the distribution instead of vendored copies.
 
-## Build and run with Docker
+## Run with Docker
+
+A ready image is built by GitHub Actions from this branch. The test suites run during every build, and a failed test stops it.
+
+```bash
+docker run -d --name bytecoind --restart unless-stopped \
+  -p 8080:8080 -p 127.0.0.1:8081:8081 \
+  -v bytecoin-data:/var/lib/bytecoin \
+  ghcr.io/bytecoinbcn-community/bytecoin:v3.5.1-community.1
+```
+
+- Digest of `v3.5.1-community.1`: `sha256:319623040856cd86f162b4539106aa5c08fe9a51f8610dd593a760973486d045`. To run exactly this build, use `ghcr.io/bytecoinbcn-community/bytecoin@sha256:319623040856cd86f162b4539106aa5c08fe9a51f8610dd593a760973486d045`.
+- GitHub publishes a build provenance attestation that ties the image to the commit and the workflow run. The [workflow](.github/workflows/docker.yml) and its [runs](https://github.com/bytecoinBCN-community/bytecoin/actions) are public.
+- `8080` is P2P. Open it to help the network.
+- `8081` is RPC. Keep it on localhost.
+- The image contains `bytecoind`, `walletd` and `minerd`, and runs as an unprivileged user.
+- On a hard disk, the first sync and a start after an unclean shutdown can take hours. An SSD helps.
+
+### Build it yourself
 
 The build expects `bytecoin` and `lmdb` side by side. `lmdb` is pinned to the commit this branch was built and tested with:
 
@@ -25,17 +43,9 @@ git clone -b ubuntu-24.04 https://github.com/bytecoinBCN-community/bytecoin.git
 git clone https://github.com/bcndev/lmdb.git
 git -C lmdb checkout f334f6a4a5c00b873f5721b8265d102c6b6b3667
 docker build --build-arg JOBS=2 -f bytecoin/docker/Dockerfile -t bytecoin:3.5.1-noble .
-docker run -d --name bytecoind --restart unless-stopped \
-  -p 8080:8080 -p 127.0.0.1:8081:8081 \
-  -v bytecoin-data:/var/lib/bytecoin bytecoin:3.5.1-noble
 ```
 
-- The build runs the test suites, including the hash suite, and stops if any test fails.
-- The commands above use the classic builder, which Ubuntu's `docker.io` package has. Do not set `DOCKER_BUILDKIT=1` there unless you install `docker-buildx`.
-- `8080` is P2P. Open it to help the network.
-- `8081` is RPC. Keep it on localhost.
-- The image contains `bytecoind`, `walletd` and `minerd`, and runs as an unprivileged user.
-- On a hard disk, the first sync and a start after an unclean shutdown can take hours. An SSD helps.
+Then run it with the command above, using `bytecoin:3.5.1-noble` as the image. These commands use the classic builder, which Ubuntu's `docker.io` package has. Do not set `DOCKER_BUILDKIT=1` there unless you install `docker-buildx`.
 
 ## What has been tested
 
@@ -44,6 +54,7 @@ docker run -d --name bytecoind --restart unless-stopped \
 - PoW of real mainnet v4 blocks validates.
 - A node built from this code has synced the full chain to the tip and has produced blocks accepted by the network.
 - A clean build with `docker/Dockerfile` from fresh clones of this branch and the pinned `lmdb` passes the same test suites (November 9, 2026).
+- The published image `v3.5.1-community.1` pulls without a login, connects to the network and starts syncing (November 9, 2026). A full sync from it has not been run yet.
 
 ## What has not been done
 
